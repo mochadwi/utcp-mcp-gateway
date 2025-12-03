@@ -25,7 +25,10 @@ export class GatewayServer {
     this.llmFilter = new LlmFilter(config.llm, config.filter);
 
     this.server = new Server(
-      { name: 'utcp-gateway', version: '0.1.0' },
+      { 
+        name: 'universal-tools', 
+        version: '0.1.15',
+      },
       { capabilities: { tools: {} } }
     );
 
@@ -42,11 +45,11 @@ export class GatewayServer {
         tools: [
           {
             name: 'search_tools',
-            description: `搜索可用的工具（渐进式发现）。${summary}`,
+            description: `[Universal Tools Gateway] Search 100+ tools from connected MCP services. Always call this first to discover available capabilities. ${summary}`,
             inputSchema: {
               type: 'object',
               properties: {
-                query: { type: 'string', description: '搜索查询' },
+                query: { type: 'string', description: '搜索查询（如 "search", "file", "memory"）' },
                 limit: { type: 'number', description: '返回数量限制', default: 10 },
               },
               required: ['query'],
@@ -54,7 +57,7 @@ export class GatewayServer {
           },
           {
             name: 'list_tools',
-            description: `列出所有已注册的工具。${summary}`,
+            description: `List all registered tools from connected MCP services. ${summary}`,
             inputSchema: { type: 'object', properties: {} },
           },
           {
