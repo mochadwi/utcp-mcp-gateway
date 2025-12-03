@@ -12,6 +12,10 @@
   <em>Inspired by Claude Skills' Progressive Disclosure</em>
 </p>
 
+<p align="center">
+  <code>claude skills alternative</code> · <code>mcp token optimization</code> · <code>progressive tool discovery</code> · <code>mcp response filtering</code>
+</p>
+
 ---
 
 <a name="english"></a>
@@ -27,6 +31,16 @@
 > So I built on top of UTCP: **Progressive Discovery + Code Mode + LLM Filtering** — the smarter way to use MCP.
 >
 > The best part? Just add one config block. Works with Claude Desktop, Windsurf, Cursor, Dify, and any MCP-compatible client. No extra servers needed.
+
+## Looking for...?
+
+- ✅ **Claude Skills alternative** for your MCP setup
+- ✅ **Better MCP tool management** without context overload
+- ✅ **Progressive tool discovery** — load tools on demand
+- ✅ **MCP token optimization** — reduce 90%+ token waste
+- ✅ **MCP response filtering** — smart summarization
+
+**You're in the right place.**
 
 ## What is this?
 
@@ -212,6 +226,16 @@ MCP_NAMES=context7,deepwiki
 > 于是我在 UTCP 基础上做了这个：**渐进式发现 + Code Mode + LLM 过滤** — 更聪明的 MCP 使用方式。
 >
 > 最棒的是？只需加一段配置。兼容 Claude Desktop、Windsurf、Cursor、Dify 等所有 MCP 客户端。无需额外服务器。
+
+## 你在找...？
+
+- ✅ **Claude Skills 替代方案** — 用于你的 MCP 配置
+- ✅ **更好的 MCP 工具管理** — 无上下文过载
+- ✅ **渐进式工具发现** — 按需加载工具
+- ✅ **MCP Token 优化** — 减少 90%+ Token 浪费
+- ✅ **MCP 响应过滤** — 智能摘要
+
+**你来对地方了。**
 
 ## 这是什么？
 
