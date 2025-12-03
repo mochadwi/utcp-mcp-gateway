@@ -9,6 +9,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { CodeModeUtcpClient } from '@utcp/code-mode';
+import { McpCallTemplateSerializer } from '@utcp/mcp';
 import type { Config, McpConfig } from './config.js';
 import { LlmFilter } from './llm-filter.js';
 
@@ -145,17 +146,18 @@ export class GatewayServer {
           args: mcp.args || [],
         };
 
-    const template = {
+    const serializer = new McpCallTemplateSerializer();
+    const template = serializer.validateDict({
       name: mcp.name,
-      call_template_type: 'mcp' as const,
+      call_template_type: 'mcp',
       config: {
         mcpServers: {
           [mcp.name]: mcpServerConfig,
         },
       },
-    };
+    });
 
-    await client.registerManual(template as any);
+    await client.registerManual(template);
     console.error(`[Gateway] Registered MCP: ${mcp.name}`);
   }
 
