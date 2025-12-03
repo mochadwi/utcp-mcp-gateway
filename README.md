@@ -164,7 +164,21 @@ That's it! Restart Claude Desktop and try: *"Search for React useState examples"
 | `search_tools` | `query`, `limit` | Find tools by keyword. Returns tools with TypeScript interfaces |
 | `list_tools` | - | List all registered tools from connected MCPs |
 | `tool_info` | `tool_name` | Get detailed TypeScript interface for a specific tool |
-| `call_tool_chain` | `code`, `timeout`, `max_output_size`, `filter_response` | Execute TypeScript code that calls multiple tools in one shot |
+| `call_tool_chain` | `code`, `timeout`, `max_output_size`, `filter_response`, `purpose` | Execute TypeScript code that calls multiple tools in one shot |
+
+### Context-Aware Summarization
+
+When using `call_tool_chain` with `filter_response: true`, you can provide a `purpose` parameter to guide the LLM summarization:
+
+```typescript
+call_tool_chain({
+  code: "const docs = await context7.context7_get_library_docs({...}); return docs;",
+  filter_response: true,
+  purpose: "Find React useState usage examples"
+})
+```
+
+The LLM will extract only information relevant to your purpose, instead of generic summarization.
 
 ### Example Flow
 
@@ -214,7 +228,8 @@ Use numbered environment variables for clear configuration:
         "MCP_2_COMMAND": "npx",
         "MCP_2_ARGS": "-y,@anthropic/mcp-server-filesystem,/path/to/dir",
         
-        "LLM_API_KEY": "sk-xxx"
+        "LLM_API_KEY": "sk-xxx",
+        "MAX_RESPONSE_CHARS": "10000"
       }
     }
   }
@@ -395,7 +410,21 @@ Code Mode:  用户 → LLM 写代码 → 一次执行全部 → 结果
 | `search_tools` | `query`, `limit` | 按关键词搜索工具，返回带 TypeScript 接口的工具列表 |
 | `list_tools` | - | 列出所有已注册的工具 |
 | `tool_info` | `tool_name` | 获取特定工具的详细 TypeScript 接口 |
-| `call_tool_chain` | `code`, `timeout`, `max_output_size`, `filter_response` | 执行 TypeScript 代码，一次调用多个工具 |
+| `call_tool_chain` | `code`, `timeout`, `max_output_size`, `filter_response`, `purpose` | 执行 TypeScript 代码，一次调用多个工具 |
+
+### 上下文感知摘要
+
+使用 `call_tool_chain` 时，设置 `filter_response: true` 并提供 `purpose` 参数，LLM 会根据你的目的智能提取相关信息：
+
+```typescript
+call_tool_chain({
+  code: "const docs = await context7.context7_get_library_docs({...}); return docs;",
+  filter_response: true,
+  purpose: "查找 React useState 的用法示例"
+})
+```
+
+LLM 会只提取与你目的相关的信息，而不是泛泛的摘要。
 
 ### 调用流程示例
 
@@ -445,7 +474,8 @@ MCP_NAME=context7
         "MCP_2_COMMAND": "npx",
         "MCP_2_ARGS": "-y,@anthropic/mcp-server-filesystem,/path/to/dir",
         
-        "LLM_API_KEY": "sk-xxx"
+        "LLM_API_KEY": "sk-xxx",
+        "MAX_RESPONSE_CHARS": "10000"
       }
     }
   }
