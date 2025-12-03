@@ -9,12 +9,24 @@
 </p>
 
 <p align="center">
-  <em>Endorsed by Apple, Cloudflare, and Anthropic</em>
+  <em>Inspired by Claude Skills' Progressive Disclosure</em>
 </p>
 
 ---
 
 <a name="english"></a>
+
+## The Story / 故事
+
+> I noticed [Claude Skills](https://claude.com/blog/skills-explained) works amazingly well — Claude dynamically discovers and loads only the skills it needs, avoiding context overload.
+>
+> But most agent frameworks? They dump 500+ tool definitions into the context at once. And MCP responses? Often 10,000+ chars of raw data that waste your tokens.
+>
+> Then I found [Cloudflare's Code Mode](https://blog.cloudflare.com/code-mode/) — instead of 15+ tool calls, LLM writes one code block that executes everything at once. Brilliant!
+>
+> So I built this: **Progressive Discovery + Code Mode + LLM Filtering** — the smarter way to use MCP.
+>
+> The best part? Just add one config block. Works with Claude Desktop, Windsurf, Cursor, Dify, and any MCP-compatible client. No extra servers needed.
 
 ## What is this?
 
@@ -188,6 +200,18 @@ MCP_NAMES=context7,deepwiki
 ---
 
 <a name="中文"></a>
+
+## 故事
+
+> 我发现 [Claude Skills](https://claude.com/blog/skills-explained) 效果惊人 — Claude 动态发现并只加载需要的技能，避免上下文过载。
+>
+> 但大多数 Agent 框架？一次性把 500+ 工具定义塞进上下文。而且 MCP 响应？经常是 10,000+ 字符的原始数据，白白浪费 Token。
+>
+> 然后我发现了 [Cloudflare 的 Code Mode](https://blog.cloudflare.com/code-mode/) — 不再需要 15+ 次工具调用，LLM 写一段代码一次执行全部。太妙了！
+>
+> 于是我做了这个：**渐进式发现 + Code Mode + LLM 过滤** — 更聪明的 MCP 使用方式。
+>
+> 最棒的是？只需加一段配置。兼容 Claude Desktop、Windsurf、Cursor、Dify 等所有 MCP 客户端。无需额外服务器。
 
 ## 这是什么？
 
