@@ -49,17 +49,45 @@ Your AI  →  utcp-mcp-gateway  →  Any MCP Server
 
 That's it! Your AI now has access to Context7 with smart filtering.
 
+## Why Code Mode?
+
+> *"LLMs excel at writing code but struggle with tool calls."*  
+> — Apple, Cloudflare, Anthropic
+
+**Traditional Tool Calling:**
+```
+User → LLM → Tool 1 → LLM → Tool 2 → LLM → Tool 3 → Result
+       (5 round trips, massive token waste)
+```
+
+**Code Mode:**
+```
+User → LLM writes code → Execute all tools at once → Result
+       (1 round trip, 60%+ token savings)
+```
+
+### Benchmark Results
+
+| Metric | Traditional | Code Mode | Savings |
+|--------|-------------|-----------|---------|
+| API Calls | 15+ calls | 1 call | **93%** |
+| Token Cost | $26/day | $0.87/day | **$9,536/year** |
+| Latency | 5+ round trips | 1 round trip | **80%** |
+
+*Source: [Independent Python Benchmark](https://github.com/imran31415/codemode_python_benchmark)*
+
 ## Features
 
 | Feature | Description |
 |---------|-------------|
 | 🔌 **Universal MCP** | Connect any HTTP or stdio MCP server |
-| 🧠 **LLM Filtering** | Intelligent summarization (97% savings!) |
-| 🔍 **Progressive Discovery** | `search_tools` - find tools without loading all |
-| ⚡ **Code Mode** | Execute TypeScript tool chains |
-| 📦 **Zero Config** | Environment variables only |
+| 🧠 **LLM Filtering** | Intelligent summarization (97% response reduction!) |
+| 🔍 **Progressive Discovery** | `search_tools` - find tools without loading all 500 definitions |
+| ⚡ **Code Mode** | Execute TypeScript tool chains in one call |
+| 🔒 **Secure Sandbox** | Code runs in isolated environment |
+| 📦 **Zero Config** | Environment variables only, no config files |
 
-## Real-World Benchmarks
+## Token Savings Benchmarks
 
 | MCP Service | Original | Filtered | Savings |
 |-------------|----------|----------|---------|
@@ -142,17 +170,45 @@ MCP_NAMES=context7,deepwiki
 
 就这样！你的 AI 现在可以使用带智能过滤的 Context7 了。
 
+## 为什么用 Code Mode？
+
+> *"LLM 擅长写代码，但不擅长调用工具。"*  
+> — Apple, Cloudflare, Anthropic
+
+**传统工具调用：**
+```
+用户 → LLM → 工具1 → LLM → 工具2 → LLM → 工具3 → 结果
+       (5 次往返，大量 Token 浪费)
+```
+
+**Code Mode：**
+```
+用户 → LLM 写代码 → 一次执行所有工具 → 结果
+       (1 次往返，节省 60%+ Token)
+```
+
+### 性能对比
+
+| 指标 | 传统方式 | Code Mode | 节省 |
+|------|----------|-----------|------|
+| API 调用次数 | 15+ 次 | 1 次 | **93%** |
+| Token 成本 | $26/天 | $0.87/天 | **$9,536/年** |
+| 延迟 | 5+ 次往返 | 1 次往返 | **80%** |
+
+*数据来源: [独立 Python 基准测试](https://github.com/imran31415/codemode_python_benchmark)*
+
 ## 核心功能
 
 | 功能 | 说明 |
 |------|------|
 | 🔌 **通用 MCP** | 连接任意 HTTP 或 stdio MCP |
-| 🧠 **LLM 过滤** | 智能摘要（节省 97%！）|
-| 🔍 **渐进式发现** | `search_tools` - 按需搜索工具 |
-| ⚡ **Code Mode** | 执行 TypeScript 代码链 |
-| 📦 **零配置** | 只需环境变量 |
+| 🧠 **LLM 过滤** | 智能摘要（响应缩小 97%！）|
+| 🔍 **渐进式发现** | `search_tools` - 按需搜索，无需加载全部 500 个工具 |
+| ⚡ **Code Mode** | 一次调用执行 TypeScript 代码链 |
+| 🔒 **安全沙箱** | 代码在隔离环境运行 |
+| 📦 **零配置** | 只需环境变量，无需配置文件 |
 
-## 实测效果
+## Token 节省实测
 
 | MCP 服务 | 原始响应 | 过滤后 | 节省 |
 |----------|----------|--------|------|
