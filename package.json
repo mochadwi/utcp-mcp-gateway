@@ -1,0 +1,59 @@
+{
+  "name": "utcp-mcp-gateway",
+  "version": "0.1.0",
+  "description": "UTCP Gateway - Universal MCP proxy with LLM-powered response filtering",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "utcp-mcp-gateway": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "utcp",
+    "gateway",
+    "proxy",
+    "llm",
+    "ai",
+    "tool-calling",
+    "claude",
+    "windsurf"
+  ],
+  "author": "reinn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xuleileon/utcp-mcp-gateway"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@utcp/code-mode": "^1.0.5",
+    "@utcp/mcp": "^1.0.17",
+    "@utcp/sdk": "^1.1.0",
+    "openai": "^4.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
