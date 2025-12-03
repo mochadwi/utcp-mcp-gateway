@@ -152,14 +152,38 @@ MCP_NAMES=context7,deepwiki
 | `ENABLE_LLM_FILTER` | true | Enable/disable filtering |
 | `MAX_RESPONSE_CHARS` | 2000 | Max response length |
 
-## Exposed Tools
+## How It Works
 
-| Tool | Description |
-|------|-------------|
-| `search_tools` | Find tools by keyword (progressive discovery) |
-| `list_tools` | List all available tools |
-| `call_tool` | Call any tool with smart filtering |
-| `call_tool_chain` | Execute TypeScript code chains |
+```
+┌──────────────┐     ┌─────────────────────────────────┐     ┌─────────────┐
+│   Your AI    │────▶│      utcp-mcp-gateway           │────▶│ Any MCP     │
+│ (Claude etc) │     │  ┌─────────┐  ┌─────────────┐   │     │ (Context7)  │
+└──────────────┘     │  │  UTCP   │  │ LLM Filter  │   │     └─────────────┘
+                     │  │ search  │  │ 10K→300char │   │
+                     │  └─────────┘  └─────────────┘   │
+                     └─────────────────────────────────┘
+```
+
+**Gateway exposes 4 tools to your AI:**
+
+| Tool | Parameters | What it does |
+|------|------------|--------------|
+| `search_tools` | `query`, `limit` | Find tools by keyword. Returns only relevant tools instead of 500+ definitions |
+| `list_tools` | - | List all registered tools from connected MCPs |
+| `call_tool` | `tool_name`, `arguments` | Call any tool. Response is filtered by LLM (97% smaller!) |
+| `call_tool_chain` | `code` | Execute TypeScript code that calls multiple tools in one shot |
+
+### Example Flow
+
+```
+User: "How do I use React useState?"
+
+1. AI calls search_tools("react")        → Returns 2 relevant tools
+2. AI calls call_tool("get-library-docs", {topic: "useState"})
+3. Gateway fetches 10,000 chars from Context7
+4. LLM Filter summarizes to 300 chars    → 97% token saved!
+5. AI receives concise answer
+```
 
 ---
 
@@ -256,6 +280,39 @@ Code Mode:  用户 → LLM 写代码 → 一次执行全部 → 结果
 | `LLM_MODEL` | 过滤用 | 模型名称（默认 gpt-4o-mini）|
 
 配置好后重启 Claude Desktop，试试：*"搜索 React useState 用法"*
+
+## 工作原理
+
+```
+┌──────────────┐     ┌─────────────────────────────────┐     ┌─────────────┐
+│   你的 AI    │────▶│      utcp-mcp-gateway           │────▶│  任意 MCP   │
+│ (Claude 等)  │     │  ┌─────────┐  ┌─────────────┐   │     │ (Context7)  │
+└──────────────┘     │  │  UTCP   │  │ LLM 过滤器  │   │     └─────────────┘
+                     │  │  搜索   │  │ 10K→300字符 │   │
+                     │  └─────────┘  └─────────────┘   │
+                     └─────────────────────────────────┘
+```
+
+**Gateway 向你的 AI 暴露 4 个工具：**
+
+| 工具 | 参数 | 作用 |
+|------|------|------|
+| `search_tools` | `query`, `limit` | 按关键词搜索工具，只返回相关的，不用加载 500+ 定义 |
+| `list_tools` | - | 列出所有已注册的工具 |
+| `call_tool` | `tool_name`, `arguments` | 调用任意工具，响应经 LLM 过滤（缩小 97%！）|
+| `call_tool_chain` | `code` | 执行 TypeScript 代码，一次调用多个工具 |
+
+### 调用流程示例
+
+```
+用户: "React useState 怎么用？"
+
+1. AI 调用 search_tools("react")        → 返回 2 个相关工具
+2. AI 调用 call_tool("get-library-docs", {topic: "useState"})
+3. Gateway 从 Context7 获取 10,000 字符
+4. LLM 过滤器摘要为 300 字符           → 节省 97% Token！
+5. AI 收到简洁答案
+```
 
 ## 核心功能
 
