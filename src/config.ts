@@ -45,36 +45,23 @@ export type Config = z.infer<typeof ConfigSchema>;
 
 /**
  * 从环境变量解析配置
+ * 
+ * 支持三种配置方式：
+ * 1. 单个 MCP：MCP_URL, MCP_NAME
+ * 2. 多个 MCP（分号分隔）：MCP_URL="url1;url2", MCP_NAME="name1;name2"
+ * 3. 多个 MCP（编号方式）：MCP_1_URL, MCP_1_NAME, MCP_2_URL, MCP_2_NAME...
  */
 export function loadConfig(): Config {
-  // 解析 MCP 配置
-  const mcpUrls = process.env.MCP_URLS?.split(',') || [process.env.MCP_URL].filter(Boolean);
-  const mcpNames = process.env.MCP_NAMES?.split(',') || [process.env.MCP_NAME].filter(Boolean);
-  const mcpTransports = process.env.MCP_TRANSPORTS?.split(',') || [process.env.MCP_TRANSPORT || 'http'];
-  const mcpAuthTypes = process.env.MCP_AUTH_TYPES?.split(',') || [process.env.MCP_AUTH_TYPE || 'none'];
-  const mcpAuthTokens = process.env.MCP_AUTH_TOKENS?.split(',') || [process.env.MCP_AUTH_TOKEN].filter(Boolean);
-  
-  // stdio 模式配置
-  const mcpCommands = process.env.MCP_COMMANDS?.split(',') || [process.env.MCP_COMMAND].filter(Boolean);
-  const mcpArgsArray = process.env.MCP_ARGS_LIST?.split(';') || [process.env.MCP_ARGS].filter(Boolean);
-
-  // 确定 MCP 数量
-  const mcpCount = Math.max(mcpUrls.length, mcpCommands.length, mcpNames.length);
-  
   const mcps: McpConfig[] = [];
-  for (let i = 0; i < mcpCount; i++) {
-    const transport = (mcpTransports[i] || 'http') as 'http' | 'stdio';
-    const isStdio = transport === 'stdio' || mcpCommands[i];
-    
-    mcps.push({
-      url: mcpUrls[i],
-      name: mcpNames[i] || `mcp-${i}`,
-      transport: isStdio ? 'stdio' : 'http',
-      command: mcpCommands[i],
-      args: mcpArgsArray[i]?.split(','),
-      authType: (mcpAuthTypes[i] || 'none') as 'none' | 'bearer' | 'api-key',
-      authToken: mcpAuthTokens[i],
-    });
+
+  // 方式 3：编号方式配置 MCP_1_*, MCP_2_*, ...
+  const numberedMcps = parseNumberedMcpConfig();
+  if (numberedMcps.length > 0) {
+    mcps.push(...numberedMcps);
+  } else {
+    // 方式 1 和 2：使用分号分隔的配置
+    const legacyMcps = parseLegacyMcpConfig();
+    mcps.push(...legacyMcps);
   }
 
   // 解析 LLM 配置
@@ -92,6 +79,87 @@ export function loadConfig(): Config {
   };
 
   return { mcps, llm, filter };
+}
+
+/**
+ * 解析编号方式的 MCP 配置
+ * MCP_1_NAME, MCP_1_URL, MCP_2_NAME, MCP_2_COMMAND, ...
+ */
+function parseNumberedMcpConfig(): McpConfig[] {
+  const mcps: McpConfig[] = [];
+  
+  // 查找所有 MCP_N_NAME 环境变量
+  for (let i = 1; i <= 20; i++) { // 最多支持 20 个
+    const prefix = `MCP_${i}_`;
+    const name = process.env[`${prefix}NAME`];
+    
+    if (!name) continue; // 没有这个编号的配置
+    
+    const url = process.env[`${prefix}URL`];
+    const command = process.env[`${prefix}COMMAND`];
+    const argsStr = process.env[`${prefix}ARGS`];
+    const transport = process.env[`${prefix}TRANSPORT`] as 'http' | 'stdio' | undefined;
+    const authType = process.env[`${prefix}AUTH_TYPE`] as 'none' | 'bearer' | 'api-key' | undefined;
+    const authToken = process.env[`${prefix}AUTH_TOKEN`];
+    
+    // 自动判断 transport 类型
+    const isStdio = transport === 'stdio' || !!command;
+    
+    mcps.push({
+      name,
+      url,
+      transport: isStdio ? 'stdio' : 'http',
+      command,
+      args: argsStr ? argsStr.split(',') : undefined,
+      authType: authType || 'none',
+      authToken,
+    });
+  }
+  
+  return mcps;
+}
+
+/**
+ * 解析旧版分号分隔方式的 MCP 配置（向后兼容）
+ */
+function parseLegacyMcpConfig(): McpConfig[] {
+  // 解析 MCP 配置（支持分号分隔）
+  const mcpUrls = process.env.MCP_URL?.split(';') || [];
+  const mcpNames = process.env.MCP_NAME?.split(';') || [];
+  const mcpTransports = process.env.MCP_TRANSPORT?.split(';') || [];
+  const mcpAuthTypes = process.env.MCP_AUTH_TYPE?.split(';') || [];
+  const mcpAuthTokens = process.env.MCP_AUTH_TOKEN?.split(';') || [];
+  
+  // stdio 模式配置
+  const mcpCommands = process.env.MCP_COMMAND?.split(';') || [];
+  const mcpArgsArray = process.env.MCP_ARGS?.split(';') || [];
+
+  // 确定 MCP 数量
+  const mcpCount = Math.max(mcpUrls.length, mcpCommands.length, mcpNames.length);
+  
+  if (mcpCount === 0) return [];
+  
+  const mcps: McpConfig[] = [];
+  for (let i = 0; i < mcpCount; i++) {
+    const transport = (mcpTransports[i] || 'http') as 'http' | 'stdio';
+    const command = mcpCommands[i];
+    const isStdio = transport === 'stdio' || !!command;
+    
+    const name = mcpNames[i];
+    if (!name) continue; // 跳过没有名称的配置
+    
+    mcps.push({
+      url: mcpUrls[i],
+      name,
+      transport: isStdio ? 'stdio' : 'http',
+      command,
+      args: mcpArgsArray[i]?.split(','),
+      authType: (mcpAuthTypes[i] || 'none') as 'none' | 'bearer' | 'api-key',
+      authToken: mcpAuthTokens[i],
+    });
+  }
+  
+  return mcps;
 }
 
 /**

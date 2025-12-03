@@ -196,24 +196,43 @@ MCP_URL=https://mcp.context7.com/mcp
 MCP_NAME=context7
 ```
 
-### Multiple MCPs
+### Multiple MCPs (Recommended: Numbered Style)
 
-Use semicolons to separate multiple services:
+Use numbered environment variables for clear configuration:
 
-```bash
-MCP_URL="https://mcp.context7.com/mcp;https://mcp.deepwiki.com/mcp"
-MCP_NAME="context7;deepwiki"
-MCP_TRANSPORT="http;http"
+```json
+{
+  "mcpServers": {
+    "gateway": {
+      "command": "npx",
+      "args": ["-y", "utcp-mcp-gateway"],
+      "env": {
+        "MCP_1_NAME": "context7",
+        "MCP_1_URL": "https://mcp.context7.com/mcp",
+        
+        "MCP_2_NAME": "filesystem",
+        "MCP_2_COMMAND": "npx",
+        "MCP_2_ARGS": "-y,@anthropic/mcp-server-filesystem,/path/to/dir",
+        
+        "LLM_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
 ```
 
-Or in Claude Desktop config:
+**Numbered variables:**
+- `MCP_1_NAME`, `MCP_1_URL` - First MCP (HTTP mode)
+- `MCP_2_NAME`, `MCP_2_COMMAND`, `MCP_2_ARGS` - Second MCP (stdio mode)
+- Up to `MCP_20_*` supported
+
+### Multiple MCPs (Alternative: Semicolon Style)
 
 ```json
 {
   "env": {
     "MCP_URL": "https://mcp.context7.com/mcp;https://mcp.deepwiki.com/mcp",
-    "MCP_NAME": "context7;deepwiki",
-    "MCP_TRANSPORT": "http;http"
+    "MCP_NAME": "context7;deepwiki"
   }
 }
 ```
@@ -408,24 +427,43 @@ MCP_URL=https://mcp.context7.com/mcp
 MCP_NAME=context7
 ```
 
-### 多个 MCP
+### 多个 MCP（推荐：编号方式）
 
-用分号分隔多个服务：
+使用编号环境变量进行清晰配置：
 
-```bash
-MCP_URL="https://mcp.context7.com/mcp;https://mcp.deepwiki.com/mcp"
-MCP_NAME="context7;deepwiki"
-MCP_TRANSPORT="http;http"
+```json
+{
+  "mcpServers": {
+    "gateway": {
+      "command": "npx",
+      "args": ["-y", "utcp-mcp-gateway"],
+      "env": {
+        "MCP_1_NAME": "context7",
+        "MCP_1_URL": "https://mcp.context7.com/mcp",
+        
+        "MCP_2_NAME": "filesystem",
+        "MCP_2_COMMAND": "npx",
+        "MCP_2_ARGS": "-y,@anthropic/mcp-server-filesystem,/path/to/dir",
+        
+        "LLM_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
 ```
 
-或在 Claude Desktop 配置中：
+**编号变量：**
+- `MCP_1_NAME`, `MCP_1_URL` - 第一个 MCP（HTTP 模式）
+- `MCP_2_NAME`, `MCP_2_COMMAND`, `MCP_2_ARGS` - 第二个 MCP（stdio 模式）
+- 最多支持 `MCP_20_*`
+
+### 多个 MCP（备选：分号方式）
 
 ```json
 {
   "env": {
     "MCP_URL": "https://mcp.context7.com/mcp;https://mcp.deepwiki.com/mcp",
-    "MCP_NAME": "context7;deepwiki",
-    "MCP_TRANSPORT": "http;http"
+    "MCP_NAME": "context7;deepwiki"
   }
 }
 ```
