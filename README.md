@@ -245,7 +245,7 @@ Use numbered environment variables for clear configuration:
 | `LLM_BASE_URL` | OpenAI | Custom endpoint (OpenAI-compatible) |
 | `LLM_MODEL` | gpt-4o-mini | Model for summarization |
 | `ENABLE_LLM_FILTER` | true | Enable/disable filtering |
-| `MAX_RESPONSE_CHARS` | 2000 | Max response length |
+| `MAX_RESPONSE_CHARS` | 10000 | Max response length before LLM summarization |
 
 ---
 
@@ -476,7 +476,7 @@ MCP_NAME=context7
 | `LLM_BASE_URL` | OpenAI | 自定义端点（兼容 OpenAI 格式）|
 | `LLM_MODEL` | gpt-4o-mini | 摘要用的模型 |
 | `ENABLE_LLM_FILTER` | true | 开启/关闭过滤 |
-| `MAX_RESPONSE_CHARS` | 2000 | 最大响应长度 |
+| `MAX_RESPONSE_CHARS` | 10000 | 超过此长度时使用 LLM 摘要 |
 
 ---
 

@@ -74,7 +74,7 @@ export function loadConfig(): Config {
   // 解析过滤配置
   const filter: FilterConfig = {
     enabled: process.env.ENABLE_LLM_FILTER !== 'false',
-    maxResponseChars: parseInt(process.env.MAX_RESPONSE_CHARS || '2000', 10),
+    maxResponseChars: parseInt(process.env.MAX_RESPONSE_CHARS || '10000', 10),
     summarizeThreshold: parseInt(process.env.SUMMARIZE_THRESHOLD || '5000', 10),
   };
 

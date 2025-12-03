@@ -99,7 +99,8 @@ return result;  // 再处理
                 code: { type: 'string', description: 'TypeScript 代码，使用 await manual.tool(args) 调用工具' },
                 timeout: { type: 'number', description: '超时时间(ms)', default: 30000 },
                 max_output_size: { type: 'number', description: '最大输出字符数', default: 50000 },
-                filter_response: { type: 'boolean', description: '是否使用 LLM 摘要结果（默认 false 保留原始结构）', default: false },
+                filter_response: { type: 'boolean', description: '是否使用 LLM 智能摘要（默认 false）', default: false },
+                purpose: { type: 'string', description: '用户的请求目的（启用 filter_response 时，LLM 会根据此目的提取相关信息）' },
               },
               required: ['code'],
             },
@@ -128,7 +129,8 @@ return result;  // 再处理
               args?.code as string,
               args?.timeout as number,
               args?.max_output_size as number,
-              args?.filter_response as boolean
+              args?.filter_response as boolean,
+              args?.purpose as string
             );
 
           default:
@@ -308,7 +310,8 @@ return result;  // 再处理
     code: string,
     timeout = 30000,
     maxOutputSize = 50000,
-    filterResponse = false
+    filterResponse = false,
+    purpose?: string
   ) {
     const client = await this.getUtcpClient();
     const { result, logs } = await client.callToolChain(code, timeout);
@@ -319,6 +322,13 @@ return result;  // 再处理
     
     // 检查输出大小
     if (content.length > maxOutputSize) {
+      // 如果超限且开启了过滤，尝试用 LLM 压缩
+      if (filterResponse && purpose) {
+        const filtered = await this.llmFilter.filter(content, purpose);
+        return {
+          content: [{ type: 'text', text: filtered }],
+        };
+      }
       const truncated = content.slice(0, maxOutputSize) + '\n...\n[max_output_size exceeded, 请在代码中过滤数据后再 return]';
       return {
         content: [{ type: 'text', text: truncated }],
@@ -327,7 +337,7 @@ return result;  // 再处理
     
     // 根据 filterResponse 参数决定是否过滤
     if (filterResponse) {
-      const filtered = await this.llmFilter.filter(content, '代码执行结果');
+      const filtered = await this.llmFilter.filter(content, purpose);
       return {
         content: [{ type: 'text', text: filtered }],
       };
