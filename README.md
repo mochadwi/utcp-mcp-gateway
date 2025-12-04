@@ -272,8 +272,10 @@ Use numbered environment variables for clear configuration:
 
 **How it works:**
 - `list_tools` returns brief summaries instead of full schemas (saves tokens)
-- `search_tools` uses LLM to understand intent and recommend relevant tools
+- `search_tools` uses LLM to understand intent and recommend relevant tools (uses full descriptions for accuracy)
 - Falls back to keyword search if LLM is unavailable
+- Fuzzy matching for tool names in case LLM returns slightly different names
+- Pre-truncates large responses (>200k chars) before LLM summarization
 
 ---
 
@@ -531,8 +533,10 @@ MCP_NAME=context7
 
 **工作原理：**
 - `list_tools` 返回精简摘要而非完整 schema（节省 token）
-- `search_tools` 使用 LLM 理解意图并推荐相关工具
+- `search_tools` 使用 LLM 理解意图并推荐相关工具（使用全量描述确保准确性）
 - LLM 不可用时回退到关键词搜索
+- 工具名模糊匹配，容错 LLM 返回格式不完全一致的情况
+- 超大响应（>200k 字符）预截断后再进行 LLM 摘要
 
 ---
 
