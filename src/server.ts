@@ -27,7 +27,7 @@ export class GatewayServer {
     this.server = new Server(
       { 
         name: 'universal-tools', 
-        version: '0.1.15',
+        version: '0.1.16',
       },
       { capabilities: { tools: {} } }
     );
@@ -323,10 +323,13 @@ return result;  // 再处理
     const fullResult = { success: true, result, logs };
     const content = JSON.stringify(fullResult, null, 2);
     
+    // 使用配置的强制过滤选项或调用方指定的过滤选项
+    const shouldFilter = filterResponse || this.config.filter.forceLlmFilter;
+    
     // 检查输出大小
     if (content.length > maxOutputSize) {
       // 如果超限且开启了过滤，尝试用 LLM 压缩
-      if (filterResponse && purpose) {
+      if (shouldFilter && purpose) {
         const filtered = await this.llmFilter.filter(content, purpose);
         return {
           content: [{ type: 'text', text: filtered }],
@@ -338,8 +341,8 @@ return result;  // 再处理
       };
     }
     
-    // 根据 filterResponse 参数决定是否过滤
-    if (filterResponse) {
+    // 根据 shouldFilter 决定是否过滤
+    if (shouldFilter) {
       const filtered = await this.llmFilter.filter(content, purpose);
       return {
         content: [{ type: 'text', text: filtered }],

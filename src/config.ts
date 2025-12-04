@@ -27,8 +27,9 @@ const LlmConfigSchema = z.object({
 // 过滤配置 schema
 const FilterConfigSchema = z.object({
   enabled: z.boolean().default(true),
-  maxResponseChars: z.number().default(2000),
+  maxResponseChars: z.number().default(10000),
   summarizeThreshold: z.number().default(5000),
+  forceLlmFilter: z.boolean().default(false),
 });
 
 // 完整配置 schema
@@ -76,6 +77,7 @@ export function loadConfig(): Config {
     enabled: process.env.ENABLE_LLM_FILTER !== 'false',
     maxResponseChars: parseInt(process.env.MAX_RESPONSE_CHARS || '10000', 10),
     summarizeThreshold: parseInt(process.env.SUMMARIZE_THRESHOLD || '5000', 10),
+    forceLlmFilter: process.env.FORCE_LLM_FILTER === 'true',
   };
 
   return { mcps, llm, filter };

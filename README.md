@@ -261,6 +261,7 @@ Use numbered environment variables for clear configuration:
 | `LLM_MODEL` | gpt-4o-mini | Model for summarization |
 | `ENABLE_LLM_FILTER` | true | Enable/disable filtering |
 | `MAX_RESPONSE_CHARS` | 10000 | Max response length before LLM summarization |
+| `FORCE_LLM_FILTER` | false | Force LLM summarization for all responses |
 
 ---
 
@@ -507,6 +508,7 @@ MCP_NAME=context7
 | `LLM_MODEL` | gpt-4o-mini | 摘要用的模型 |
 | `ENABLE_LLM_FILTER` | true | 开启/关闭过滤 |
 | `MAX_RESPONSE_CHARS` | 10000 | 超过此长度时使用 LLM 摘要 |
+| `FORCE_LLM_FILTER` | false | 强制所有响应都经过 LLM 摘要 |
 
 ---
 
