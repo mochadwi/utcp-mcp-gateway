@@ -263,6 +263,18 @@ Use numbered environment variables for clear configuration:
 | `MAX_RESPONSE_CHARS` | 10000 | Max response length before LLM summarization |
 | `FORCE_LLM_FILTER` | false | Force LLM summarization for all responses |
 
+### Smart Router Settings (v0.1.20+)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_LLM_SEARCH` | true | Use LLM for intelligent tool search |
+| `ROUTER_MODEL` | (uses LLM_MODEL) | Model for tool routing (recommend faster model) |
+
+**How it works:**
+- `list_tools` returns brief summaries instead of full schemas (saves tokens)
+- `search_tools` uses LLM to understand intent and recommend relevant tools
+- Falls back to keyword search if LLM is unavailable
+
 ---
 
 <a name="中文"></a>
@@ -509,6 +521,18 @@ MCP_NAME=context7
 | `ENABLE_LLM_FILTER` | true | 开启/关闭过滤 |
 | `MAX_RESPONSE_CHARS` | 10000 | 超过此长度时使用 LLM 摘要 |
 | `FORCE_LLM_FILTER` | false | 强制所有响应都经过 LLM 摘要 |
+
+### 智能路由配置 (v0.1.20+)
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `ENABLE_LLM_SEARCH` | true | 使用 LLM 智能搜索工具 |
+| `ROUTER_MODEL` | (复用 LLM_MODEL) | 路由用的模型（建议用更快的模型）|
+
+**工作原理：**
+- `list_tools` 返回精简摘要而非完整 schema（节省 token）
+- `search_tools` 使用 LLM 理解意图并推荐相关工具
+- LLM 不可用时回退到关键词搜索
 
 ---
 
