@@ -60,6 +60,12 @@ export class LlmFilter {
       return this.truncate(content);
     }
 
+    // 预截断到 LLM 可处理的范围（120k tokens ≈ 200k 字符，留余量给 system prompt）
+    const maxLlmInput = 200000;
+    const truncatedContent = content.length > maxLlmInput
+      ? content.slice(0, maxLlmInput) + '\n\n[内容已截断用于摘要，原始长度: ' + content.length + ' 字符]'
+      : content;
+
     try {
       const systemPrompt = purpose
         ? `你是一个智能信息提取助手。用户正在进行以下任务：
@@ -85,7 +91,7 @@ export class LlmFilter {
         model: this.config.model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: content },
+          { role: 'user', content: truncatedContent },
         ],
         max_tokens: Math.ceil(this.filterConfig.maxResponseChars / 2),
         temperature: 0.3,
