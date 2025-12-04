@@ -28,14 +28,19 @@ export class LlmFilter {
    * @param purpose 用户的请求目的（用于指导摘要方向）
    */
   async filter(content: string, purpose?: string): Promise<string> {
-    // 如果内容较短，直接返回
-    if (content.length <= this.filterConfig.maxResponseChars) {
-      return content;
-    }
-
     // 如果未启用过滤或没有 API Key，使用截断
     if (!this.filterConfig.enabled || !this.client) {
       return this.truncate(content);
+    }
+
+    // 如果强制过滤，跳过长度检查，直接使用 LLM 摘要
+    if (this.filterConfig.forceLlmFilter) {
+      return this.summarize(content, purpose);
+    }
+
+    // 如果内容较短，直接返回
+    if (content.length <= this.filterConfig.maxResponseChars) {
+      return content;
     }
 
     // 如果内容低于摘要阈值，使用截断
@@ -44,6 +49,17 @@ export class LlmFilter {
     }
 
     // 使用 LLM 智能摘要
+    return this.summarize(content, purpose);
+  }
+
+  /**
+   * 使用 LLM 智能摘要
+   */
+  private async summarize(content: string, purpose?: string): Promise<string> {
+    if (!this.client) {
+      return this.truncate(content);
+    }
+
     try {
       const systemPrompt = purpose
         ? `你是一个智能信息提取助手。用户正在进行以下任务：
