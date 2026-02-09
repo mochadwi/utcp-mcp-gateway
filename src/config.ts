@@ -13,7 +13,8 @@ const McpConfigSchema = z.object({
   command: z.string().optional(),
   args: z.array(z.string()).optional(),
   // 认证
-  authType: z.enum(['none', 'bearer', 'api-key']).default('none'),
+  authType: z.enum(['none', 'bearer', 'api-key', 'custom']).default('none'),
+  authKey: z.string().optional(),
   authToken: z.string().optional(),
   // 环境变量
   env: z.record(z.string()).optional(),
@@ -120,19 +121,20 @@ export function loadConfig(): Config {
  */
 function parseNumberedMcpConfig(): McpConfig[] {
   const mcps: McpConfig[] = [];
-  
+
   // 查找所有 MCP_N_NAME 环境变量
   for (let i = 1; i <= 20; i++) { // 最多支持 20 个
     const prefix = `MCP_${i}_`;
     const name = process.env[`${prefix}NAME`];
-    
+
     if (!name) continue; // 没有这个编号的配置
-    
+
     const url = process.env[`${prefix}URL`];
     const command = process.env[`${prefix}COMMAND`];
     const argsStr = process.env[`${prefix}ARGS`];
     const transport = process.env[`${prefix}TRANSPORT`] as 'http' | 'stdio' | undefined;
-    const authType = process.env[`${prefix}AUTH_TYPE`] as 'none' | 'bearer' | 'api-key' | undefined;
+    const authType = process.env[`${prefix}AUTH_TYPE`] as 'none' | 'bearer' | 'api-key' | 'custom' | undefined;
+    const authKey = process.env[`${prefix}AUTH_KEY`];
     const authToken = process.env[`${prefix}AUTH_TOKEN`];
     const envJson = process.env[`${prefix}ENV_JSON`];
 
@@ -187,8 +189,9 @@ function parseLegacyMcpConfig(): McpConfig[] {
   const mcpNames = process.env.MCP_NAME?.split(';') || [];
   const mcpTransports = process.env.MCP_TRANSPORT?.split(';') || [];
   const mcpAuthTypes = process.env.MCP_AUTH_TYPE?.split(';') || [];
+  const mcpAuthKeys = process.env.MCP_AUTH_KEY?.split(';') || [];
   const mcpAuthTokens = process.env.MCP_AUTH_TOKEN?.split(';') || [];
-  
+
   // stdio 模式配置
   const mcpCommands = process.env.MCP_COMMAND?.split(';') || [];
   const mcpArgsArray = process.env.MCP_ARGS?.split(';') || [];
@@ -196,15 +199,15 @@ function parseLegacyMcpConfig(): McpConfig[] {
 
   // 确定 MCP 数量
   const mcpCount = Math.max(mcpUrls.length, mcpCommands.length, mcpNames.length);
-  
+
   if (mcpCount === 0) return [];
-  
+
   const mcps: McpConfig[] = [];
   for (let i = 0; i < mcpCount; i++) {
     const transport = (mcpTransports[i] || 'http') as 'http' | 'stdio';
     const command = mcpCommands[i];
     const isStdio = transport === 'stdio' || !!command;
-    
+
     const name = mcpNames[i];
     if (!name) continue; // 跳过没有名称的配置
 
@@ -239,12 +242,13 @@ function parseLegacyMcpConfig(): McpConfig[] {
       transport: isStdio ? 'stdio' : 'http',
       command,
       args: mcpArgsArray[i]?.split(','),
-      authType: (mcpAuthTypes[i] || 'none') as 'none' | 'bearer' | 'api-key',
+      authType: (mcpAuthTypes[i] || 'none') as 'none' | 'bearer' | 'api-key' | 'custom',
+      authKey: mcpAuthKeys[i],
       authToken: mcpAuthTokens[i],
       env,
     });
   }
-  
+
   return mcps;
 }
 
@@ -254,24 +258,24 @@ function parseLegacyMcpConfig(): McpConfig[] {
  */
 function parseOpenapiConfig(): OpenapiConfig[] {
   const openapis: OpenapiConfig[] = [];
-  
+
   for (let i = 1; i <= 20; i++) {
     const prefix = `OPENAPI_${i}_`;
     const name = process.env[`${prefix}NAME`];
-    
+
     if (!name) continue;
-    
+
     const url = process.env[`${prefix}URL`];
     if (!url) {
       console.warn(`[WARN] OPENAPI_${i} 配置了 NAME 但缺少 URL，跳过`);
       continue;
     }
-    
+
     const authType = process.env[`${prefix}AUTH_TYPE`] as 'none' | 'api-key' | 'bearer' | 'basic' | undefined;
     const authToken = process.env[`${prefix}AUTH_TOKEN`];
     const authVar = process.env[`${prefix}AUTH_VAR`] || 'Authorization';
     const authLocation = process.env[`${prefix}AUTH_LOCATION`] as 'header' | 'query' | 'cookie' | undefined;
-    
+
     openapis.push({
       name,
       url,
@@ -281,7 +285,7 @@ function parseOpenapiConfig(): OpenapiConfig[] {
       authLocation: authLocation || 'header',
     });
   }
-  
+
   return openapis;
 }
 

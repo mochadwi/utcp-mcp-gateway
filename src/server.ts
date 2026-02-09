@@ -21,6 +21,13 @@ interface ToolSummary {
   brief: string;
 }
 
+// Default empty inputSchema for tools that don't have one
+const DEFAULT_INPUT_SCHEMA = {
+  type: 'object' as const,
+  properties: {},
+  description: 'No input schema provided by the tool'
+};
+
 export class GatewayServer {
   private server: Server;
   private utcpClient: CodeModeUtcpClient | null = null;
@@ -44,14 +51,41 @@ export class GatewayServer {
     }
 
     this.server = new Server(
-      { 
-        name: 'universal-tools', 
-        version: '0.1.24',
+      {
+        name: 'universal-tools',
+        version: '0.1.25',
       },
       { capabilities: { tools: {} } }
     );
 
     this.setupHandlers();
+  }
+
+  /**
+   * Ensures a tool has a valid inputs schema.
+   * If the tool is missing inputs or has undefined/null inputs, provides a default empty schema.
+   * Logs a warning for tools missing inputSchema.
+   */
+  private ensureValidInputSchema(tool: Tool): Tool {
+    if (!tool.inputs || typeof tool.inputs !== 'object' || Object.keys(tool.inputs).length === 0) {
+      console.error(`[Gateway] WARNING: Tool "${tool.name}" is missing inputSchema, using default empty schema`);
+      return {
+        ...tool,
+        inputs: DEFAULT_INPUT_SCHEMA
+      };
+    }
+    if (!tool.inputs.type) {
+      console.error(`[Gateway] WARNING: Tool "${tool.name}" has inputSchema without 'type' property, fixing...`);
+      return {
+        ...tool,
+        inputs: {
+          type: 'object',
+          ...tool.inputs
+        }
+      };
+    }
+    return tool;
+  
   }
 
   private setupHandlers() {
@@ -134,7 +168,7 @@ export class GatewayServer {
   private async getUtcpClient(): Promise<CodeModeUtcpClient> {
     if (!this.utcpClient) {
       this.utcpClient = await CodeModeUtcpClient.create();
-      
+
       // 注册配置的 MCP 服务
       for (const mcp of this.config.mcps) {
         await this.registerMcp(mcp, this.utcpClient);
@@ -166,15 +200,27 @@ export class GatewayServer {
     }
 
     // 缓存完整定义和生成精简摘要
+    // Apply inputSchema validation to all tools
     this.toolSummaries = [];
     this.toolFullDefs.clear();
+    let toolsWithMissingSchema = 0;
+    
     for (const tool of tools) {
       const tsName = this.utcpNameToTsName(tool.name);
-      this.toolFullDefs.set(tsName, tool);
+      // Ensure tool has valid inputSchema before caching
+      const validatedTool = this.ensureValidInputSchema(tool);
+      if (validatedTool !== tool) {
+        toolsWithMissingSchema++;
+      }
+      this.toolFullDefs.set(tsName, validatedTool);
       this.toolSummaries.push({
         name: tsName,
-        brief: tool.description?.slice(0, 100) || '',
+        brief: validatedTool.description?.slice(0, 100) || '',
       });
+    }
+
+    if (toolsWithMissingSchema > 0) {
+      console.error(`[Gateway] WARNING: ${toolsWithMissingSchema} tools were missing inputSchema and have been given default schemas`);
     }
 
     // 按 manual 分组（用于能力摘要）
@@ -211,16 +257,26 @@ export class GatewayServer {
   private async registerMcp(mcp: McpConfig, client: CodeModeUtcpClient): Promise<void> {
     const mcpServerConfig = mcp.transport === 'http'
       ? {
-          transport: 'http' as const,
-          url: mcp.url,
-          ...(mcp.authToken && { headers: { Authorization: `Bearer ${mcp.authToken}` } }),
-        }
+        transport: 'http' as const,
+        url: mcp.url,
+        ...((() => {
+          const headers: Record<string, string> = {};
+          if (mcp.authToken) {
+            if (mcp.authType === 'bearer') {
+              headers['Authorization'] = `Bearer ${mcp.authToken}`;
+            } else if (mcp.authType === 'custom' && mcp.authKey) {
+              headers[mcp.authKey] = mcp.authToken;
+            }
+          }
+          return Object.keys(headers).length > 0 ? { headers } : {};
+        })()),
+      }
       : {
-          transport: 'stdio' as const,
-          command: mcp.command!,
-          args: mcp.args || [],
-          ...(mcp.env && { env: { ...process.env, ...mcp.env } }),
-        };
+        transport: 'stdio' as const,
+        command: mcp.command!,
+        args: mcp.args || [],
+        ...(mcp.env && { env: { ...process.env, ...mcp.env } }),
+      };
 
     const serializer = new McpCallTemplateSerializer();
     const template = serializer.validateDict({
@@ -290,19 +346,21 @@ export class GatewayServer {
 
   private async searchTools(query: string, limit = 10) {
     const client = await this.getUtcpClient();
-    
+
     // 如果启用了 LLM 路由且有客户端
     if (this.config.router.enabled && this.routerClient && this.toolSummaries.length > 0) {
       return this.llmSearchTools(query, limit, client);
     }
-    
+
     // 回退到原有的关键词搜索
     const tools = await client.searchTools(query, limit);
+    // Ensure all returned tools have valid inputSchema
+    const validatedTools = tools.map(t => this.ensureValidInputSchema(t));
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          tools: tools.map(t => ({
+          tools: validatedTools.map(t => ({
             name: this.utcpNameToTsName(t.name),
             description: t.description,
             typescript_interface: client.toolToTypeScriptInterface(t),
@@ -326,7 +384,7 @@ export class GatewayServer {
       .join('\n');
 
     const model = this.config.router.model || this.config.llm.model;
-    
+
     try {
       const response = await this.routerClient.chat.completions.create({
         model,
@@ -380,7 +438,7 @@ ${toolDescriptions}
       for (const name of recommendedNames) {
         // 先精确匹配
         let tool = this.toolFullDefs.get(name);
-        
+
         // 如果没找到，尝试模糊匹配（工具名包含推荐名，或推荐名包含工具名）
         if (!tool) {
           for (const [toolName, t] of this.toolFullDefs) {
@@ -391,7 +449,7 @@ ${toolDescriptions}
             }
           }
         }
-        
+
         if (tool) {
           recommendedTools.push(tool);
         }
@@ -413,11 +471,13 @@ ${toolDescriptions}
       console.error('[Gateway] LLM 搜索失败，回退到关键词搜索:', error);
       // 回退到原有搜索
       const tools = await client.searchTools(query, limit);
+      // Ensure all returned tools have valid inputSchema
+      const validatedTools = tools.map(t => this.ensureValidInputSchema(t));
       return {
         content: [{
           type: 'text',
           text: JSON.stringify({
-            tools: tools.map(t => ({
+            tools: validatedTools.map(t => ({
               name: this.utcpNameToTsName(t.name),
               description: t.description,
               typescript_interface: client.toolToTypeScriptInterface(t),
@@ -430,23 +490,23 @@ ${toolDescriptions}
 
   private async toolInfo(toolName: string) {
     const client = await this.getUtcpClient();
-    
+
     // 先尝试直接查找
     let tool = await client.getTool(toolName);
-    
+
     if (!tool) {
       // 遍历所有工具，使用多种格式匹配
       const tools = await client.getTools();
       const normalizedInput = this.utcpNameToTsName(toolName);
-      
+
       const found = tools.find(t => {
         const normalizedTool = this.utcpNameToTsName(t.name);
         // 支持多种匹配方式
         return t.name === toolName ||                    // 完全匹配
-               normalizedTool === toolName ||            // 原名已是转换格式
-               normalizedTool === normalizedInput;       // 都转换后比较
+          normalizedTool === toolName ||            // 原名已是转换格式
+          normalizedTool === normalizedInput;       // 都转换后比较
       });
-      
+
       if (!found) {
         return {
           content: [{ type: 'text', text: JSON.stringify({ error: `Tool '${toolName}' not found` }) }],
@@ -455,11 +515,14 @@ ${toolDescriptions}
       }
       tool = found;
     }
-    
+
+    // Ensure the tool has valid inputSchema before returning
+    const validatedTool = this.ensureValidInputSchema(tool);
+
     return {
       content: [{
         type: 'text',
-        text: client.toolToTypeScriptInterface(tool),
+        text: client.toolToTypeScriptInterface(validatedTool),
       }],
     };
   }
@@ -477,16 +540,18 @@ ${toolDescriptions}
         }],
       };
     }
-    
+
     // 回退到原有逻辑
     const client = await this.getUtcpClient();
     const tools = await client.getTools();
-    
+    // Ensure all returned tools have valid inputSchema
+    const validatedTools = tools.map(t => this.ensureValidInputSchema(t));
+
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          tools: tools.map(t => ({
+          tools: validatedTools.map(t => ({
             name: this.utcpNameToTsName(t.name),
             brief: t.description?.slice(0, 100) || ''
           })),
@@ -502,7 +567,7 @@ ${toolDescriptions}
    */
   private buildCallToolChainDefinition() {
     const forceLlmFilter = this.config.filter.forceLlmFilter;
-    
+
     // 基础描述
     let description = `执行 TypeScript 代码链。工具已注册为全局对象，直接用 await manual.tool(args) 调用。
 
@@ -550,10 +615,10 @@ return result;  // 再处理
 
     // 只有未强制过滤时才暴露 filter_response 参数
     if (!forceLlmFilter) {
-      properties.filter_response = { 
-        type: 'boolean', 
-        description: '是否使用 LLM 智能摘要（默认 false）', 
-        default: false 
+      properties.filter_response = {
+        type: 'boolean',
+        description: '是否使用 LLM 智能摘要（默认 false）',
+        default: false
       };
     }
 
@@ -577,14 +642,14 @@ return result;  // 再处理
   ) {
     const client = await this.getUtcpClient();
     const { result, logs } = await client.callToolChain(code, timeout);
-    
+
     // 构建完整结果（包含 logs 方便调试）
     const fullResult = { success: true, result, logs };
     const content = JSON.stringify(fullResult, null, 2);
-    
+
     // 使用配置的强制过滤选项或调用方指定的过滤选项
     const shouldFilter = filterResponse || this.config.filter.forceLlmFilter;
-    
+
     // 检查输出大小
     if (content.length > maxOutputSize) {
       // 如果超限且开启了过滤，尝试用 LLM 压缩
@@ -599,7 +664,7 @@ return result;  // 再处理
         content: [{ type: 'text', text: truncated }],
       };
     }
-    
+
     // 根据 shouldFilter 决定是否过滤
     if (shouldFilter) {
       const filtered = await this.llmFilter.filter(content, purpose);
@@ -607,7 +672,7 @@ return result;  // 再处理
         content: [{ type: 'text', text: filtered }],
       };
     }
-    
+
     return {
       content: [{ type: 'text', text: content }],
     };

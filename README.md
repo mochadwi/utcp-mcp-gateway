@@ -152,6 +152,27 @@ Code Mode:    User → LLM writes code → Execute all at once → Result
 > "args": ["/c", "npx", "-y", "utcp-mcp-gateway"]
 > ```
 
+### Mode 4: HTTP MCP with Custom Header Authentication
+
+```json
+{
+  "mcpServers": {
+    "gateway": {
+      "command": "npx",
+      "args": ["-y", "utcp-mcp-gateway"],
+      "env": {
+        "MCP_URL": "https://api.example.com/mcp",
+        "MCP_NAME": "custom-api",
+        "MCP_AUTH_TYPE": "custom",
+        "MCP_AUTH_KEY": "x-ref-api-key",
+        "MCP_AUTH_TOKEN": "ref-199ca7a7eb84b6311a7a",
+        "LLM_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
 ### Environment Variables
 
 | Variable | Required | Description |
@@ -163,7 +184,8 @@ Code Mode:    User → LLM writes code → Execute all at once → Result
 | `MCP_TRANSPORT` | No | `http` (default) or `stdio` |
 | `MCP_N_ENV_JSON` | No | Environment variables for MCP N (JSON format, numbered style) |
 | `MCP_ENV_JSON` | No | Environment variables for MCP (semicolon style, JSON format) |
-| `MCP_AUTH_TYPE` | No | HTTP auth type: `none`, `bearer`, or `api-key` |
+| `MCP_AUTH_TYPE` | No | HTTP auth type: `none`, `bearer`, `api-key`, or `custom` |
+| `MCP_AUTH_KEY` | No | Custom header name (when `AUTH_TYPE=custom`) |
 | `MCP_AUTH_TOKEN` | No | Authentication token for HTTP MCP |
 | `LLM_API_KEY` | For filtering | Any OpenAI-compatible API key |
 | `LLM_BASE_URL` | For filtering | API endpoint (default: OpenAI) |
@@ -492,6 +514,27 @@ Code Mode:  用户 → LLM 写代码 → 一次执行全部 → 结果
 > "args": ["/c", "npx", "-y", "utcp-mcp-gateway"]
 > ```
 
+### 模式 4：HTTP MCP 自定义头认证
+
+```json
+{
+  "mcpServers": {
+    "gateway": {
+      "command": "npx",
+      "args": ["-y", "utcp-mcp-gateway"],
+      "env": {
+        "MCP_URL": "https://api.example.com/mcp",
+        "MCP_NAME": "custom-api",
+        "MCP_AUTH_TYPE": "custom",
+        "MCP_AUTH_KEY": "x-ref-api-key",
+        "MCP_AUTH_TOKEN": "ref-199ca7a7eb84b6311a7a",
+        "LLM_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
 ### 环境变量
 
 | 变量 | 必填 | 说明 |
@@ -503,7 +546,8 @@ Code Mode:  用户 → LLM 写代码 → 一次执行全部 → 结果
 | `MCP_TRANSPORT` | 否 | `http`（默认）或 `stdio` |
 | `MCP_N_ENV_JSON` | 否 | 第 N 个 MCP 的环境变量（JSON 格式，编号方式）|
 | `MCP_ENV_JSON` | 否 | MCP 环境变量（JSON 格式，分号方式）|
-| `MCP_AUTH_TYPE` | 否 | HTTP 认证类型：`none`、`bearer` 或 `api-key` |
+| `MCP_AUTH_TYPE` | 否 | HTTP 认证类型：`none`、`bearer`、`api-key` 或 `custom` |
+| `MCP_AUTH_KEY` | 否 | 自定义头名称（当 `AUTH_TYPE=custom` 时）|
 | `MCP_AUTH_TOKEN` | 否 | HTTP MCP 认证令牌 |
 | `LLM_API_KEY` | 过滤用 | 任意 OpenAI 兼容的 API Key |
 | `LLM_BASE_URL` | 过滤用 | API 端点（默认 OpenAI）|
